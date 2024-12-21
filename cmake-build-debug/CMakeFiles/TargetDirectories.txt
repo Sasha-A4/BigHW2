@@ -1,0 +1,5 @@
+C:/Users/popa-/BigHW2/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/popa-/BigHW2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/popa-/BigHW2/cmake-build-debug/resurses/CMakeFiles/main.dir
+C:/Users/popa-/BigHW2/cmake-build-debug/resurses/CMakeFiles/edit_cache.dir
+C:/Users/popa-/BigHW2/cmake-build-debug/resurses/CMakeFiles/rebuild_cache.dir
