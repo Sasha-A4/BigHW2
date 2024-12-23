@@ -11,8 +11,8 @@ struct Fixed;
 template<size_t M, size_t L>
 struct FastFixed {
     static_assert(M > L, "M must be large than L");
-//    static constexpr size_t bits = M;
-//    static constexpr size_t frac = L;
+    static constexpr size_t bits = M;
+    static constexpr size_t frac = L;
 
     using StorageType = typename std::conditional<(M <= 8), int_fast8_t,
             typename std::conditional<(M <= 16), int_fast16_t,
@@ -23,8 +23,8 @@ struct FastFixed {
     StorageType value;
 
     constexpr FastFixed(int n = 0): value(static_cast<StorageType>(n) << L) {}
-//    constexpr FastFixed(float f): value(f * (StorageType(1) << L)) {}
- //   constexpr FastFixed(double f): value(f * (StorageType(1) << L)) {}
+    constexpr FastFixed(float f): value(f * (StorageType(1) << L)) {}
+    constexpr FastFixed(double f): value(f * (StorageType(1) << L)) {}
 
     static constexpr FastFixed from_raw(StorageType x) {
         FastFixed result;
@@ -111,12 +111,12 @@ std::ostream &operator<<(std::ostream &out, FastFixed<M,L> x) {
     return out << static_cast<double>(x);
 }
 
-/*template<size_t M, size_t L>
+template<size_t M, size_t L>
 FastFixed<M,L> abs(FastFixed<M,L> x) {
     FastFixed<M,L> result = x;
     if (result.value < 0) result.value = -result.value;
     return result;
-}*/
+}
 
 
 template<size_t M, size_t L>
@@ -133,7 +133,7 @@ FastFixed<M,L> operator*(FastFixed<M,L> x, FastFixed<M,L> y) {
 
 template<size_t M, size_t L>
 FastFixed<M,L> operator/(FastFixed<M,L> x, FastFixed<M,L> y) {
-//    using ST = typename FastFixed<M,L>::StorageType;
+    using ST = typename FastFixed<M,L>::StorageType;
     if constexpr (M <= 32) {
         return FastFixed<M,L>::from_raw((static_cast<int_fast64_t>(x.value) << L) / y.value);
     } else {

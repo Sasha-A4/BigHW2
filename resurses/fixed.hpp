@@ -13,8 +13,8 @@ struct Fixed {
     static_assert(P > Q, "P must be large than Q");
     static_assert(P <= 64, "P must be under than or equal to 64");
 
-//    static constexpr size_t bits = P;
-//    static constexpr size_t frac = Q;
+    static constexpr size_t bits = P;
+    static constexpr size_t frac = Q;
 
     using StorageType = typename std::conditional<P <= 32, int32_t, int64_t>::type;
 
@@ -102,19 +102,19 @@ Fixed<P,Q> operator*(Fixed<P,Q> x, Fixed<P,Q> y) {
 
 template<size_t P, size_t Q>
 Fixed<P,Q> operator/(Fixed<P,Q> x, Fixed<P,Q> y) {
-//    using ST = typename Fixed<P,Q>::StorageType;
+    using ST = typename Fixed<P,Q>::StorageType;
     if constexpr (P <= 32) {
         return Fixed<P,Q>::from_raw((static_cast<int64_t>(x.value) << Q) / y.value);
     } else {
         return Fixed<P,Q>::from_raw((x.value << Q) / y.value);
     }
 }
-/*template<size_t P, size_t Q>
+template<size_t P, size_t Q>
 Fixed<P,Q> abs(Fixed<P,Q> x) {
     Fixed<P,Q> res = x;
     if (res.value < 0) res.value = -res.value;
     return res;
-}*/
+}
 
 template<size_t P, size_t Q>
 Fixed<P,Q> &operator+=(Fixed<P,Q> &x, Fixed<P,Q> y) { return x = x + y; }
