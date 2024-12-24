@@ -10,11 +10,12 @@
 #include <string_view>
 #include <optional>
 #include <variant>
+#include <fstream>
+#include <sstream>
+
 #include "resurses/fixed.hpp"
 #include "resurses/fast_fixed.hpp"
 #include "resurses/fixed_oper.hpp"
-#include <fstream>
-#include <sstream>
 
 using namespace std;
 
@@ -177,9 +178,17 @@ private:
     struct VectorGridLocal {
         array<VelocityType, 4> vectors[Rows][Cols]{};
 
+        static constexpr size_t DIR_UP = 0;    // (-1,0)
+        static constexpr size_t DIR_DOWN = 1;  // (1,0)
+        static constexpr size_t DIR_LEFT = 2;  // (0,-1)
+        static constexpr size_t DIR_RIGHT = 3; // (0,1)
+
         VelocityType& getVector(int x, int y, int dx, int dy) {
-            size_t index = ranges::find(directions, pair(dx, dy)) - directions.begin();
-            assert(index < directions.size());
+            size_t index;
+            if (dx == -1) index = DIR_UP;
+            else if (dx == 1) index = DIR_DOWN;
+            else if (dy == -1) index = DIR_LEFT;
+            else index = DIR_RIGHT;
             return vectors[x][y][index];
         }
 
@@ -199,7 +208,10 @@ private:
         void swapWith(FluidSimulator* sim, int x, int y) {
             swap(sim->grid[x][y], type);
             swap(sim->pressure[x][y], currentPressure);
-            swap(sim->velocityField.vectors[x][y], vectors);
+            // Заменяем std::copy на поэлементное копирование
+            for (size_t i = 0; i < 4; ++i) {
+                swap(sim->velocityField.vectors[x][y][i], vectors[i]);
+            }
         }
     };
     template<typename T>
@@ -230,6 +242,11 @@ private:
     tuple<VelocityType, bool, pair<int, int>> propagateFlow(int x, int y, VelocityType limit) {
         lastUsed[x][y] = currentTime - 1;
         VelocityType totalFlow = 0;
+
+        if (grid[x][y] == '#') {
+            return {VelocityType(0), false, {0,0}};
+        }
+
         for (auto [dx, dy] : directions) {
             int nx = x + dx, ny = y + dy;
             if (grid[nx][ny] != '#' && lastUsed[nx][ny] < currentTime) {
@@ -281,13 +298,10 @@ private:
     }
 
     VelocityType calculateMoveProbability(int x, int y) {
-        VelocityType total = 0;
-        for (auto [dx, dy] : directions) {
-            int nx = x + dx, ny = y + dy;
-            if (grid[nx][ny] == '#' || lastUsed[nx][ny] == currentTime) continue;
-            auto v = velocityField.getVector(x, y, dx, dy);
-            if (v < VelocityType(0)) continue;
-            total += v;
+        VelocityType total(0);
+        for (size_t i = 0; i < 4; ++i) {
+            auto& v = velocityField.vectors[x][y][i];
+            if (v > VelocityType(0)) total += v;
         }
         return total;
     }
@@ -360,6 +374,8 @@ public:
     }
 
     void runSimulation() {
+        const auto EMPTY_DENSITY = density[' '];
+        const auto WATER_DENSITY = density['.'];
         PressureType gravity = PressureType(0.1);
 
         for (size_t tick = 0; tick < TOTAL_TICKS; ++tick) {
@@ -422,7 +438,9 @@ public:
                             assert(newVelocity <= oldVelocity);
                             velocityField.getVector(x, y, dx, dy) = newVelocity;
                             auto force = convertToPressure(oldVelocity - newVelocity) * density[(int)grid[x][y]];
-                            if (grid[x][y] == '.') force *= PressureType(0.8);
+                            if (grid[x][y] == '.') {
+                                force *= PressureType(0.8);
+                            }
                             if (grid[x + dx][y + dy] == '#') {
                                 pressure[x][y] += force / directionCount[x][y];
                                 totalPressureChange += force / directionCount[x][y];
@@ -690,4 +708,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-
